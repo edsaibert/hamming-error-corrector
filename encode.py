@@ -10,6 +10,7 @@ def transform_byte_into_bits(byte, read_bits, bits_counter, overflow):
             overflow_counter += 1
     return (read_bits, overflow, bits_counter, overflow_counter)
 
+
 def read_26bits(filename):
     with open(filename, 'rb') as file:
         overflow = 0
@@ -30,6 +31,56 @@ def read_26bits(filename):
             
             yield read_bits
             
+
+def identify_parity_bits(n):
+    parity_bits = [1]
+    i = 2
+    while i <= n:
+        parity_bits.append(i)
+        i = i * 2; 
+    return parity_bits
+
+
+def add_chunk_to_message(chunk, message):
+    parity_bits = identify_parity_bits(31)
+    ones_in_the_chunk = []
+    
+    for i in range(31):
+        if (i + 1) not in parity_bits:
+            bit = (chunk >> i) & 1
+            message = (message << 1) | bit
+            if bit == 1:
+                ones_in_the_chunk.append(i)
+
+    return message, ones_in_the_chunk
+
+
+def add_parity_to_message(ones_in_the_chunk, parity_bits, message):
+    xor_result = 0
+    for one in ones_in_the_chunk:
+        xor_result ^= one
+
+    for parity in reversed(parity_bits): 
+        message = (message << 1) | ((xor_result >> (parity - 1)) & 1)
+        
+    return message
+
+
+def insert_parity_bits(chunk):
+    message = 0
+    parity = 0
+    ones_in_the_chunk = []
+
+    message, ones_in_the_chunk = add_chunk_to_message(chunk, message)
+    parity_bits = identify_parity_bits(31)
+    parity = add_parity_to_message(ones_in_the_chunk, parity_bits, message)
+
+    print("")
+    print(f"message: {message:031b}")
+    print(f"parity: {parity:031b}")
+    print("")
+
+
 def encode(filename):
     """Encodes the given file in Hamming (31, 26).
 
@@ -40,6 +91,6 @@ def encode(filename):
         None
     """
     for chunk in read_26bits(filename):
-        print(f"{chunk:026b}")
+        insert_parity_bits(chunk)
 
 
