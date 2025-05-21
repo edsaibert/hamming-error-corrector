@@ -1,4 +1,3 @@
-import math
 
 def transform_byte_into_bits(byte, read_bits, bits_counter, overflow):
     """Adds the bits from a byte to the read_bits and overflow variables (if needed).
@@ -132,22 +131,38 @@ def insert_parity_bits(chunk):
     parity_bits = identify_parity_bits(31)
     parity = add_parity_to_message(ones_in_the_chunk, parity_bits, message)
 
-    print(f"message: {message:031b}")
-    print(f"parity: {parity:031b}")
-    print("")
-
     return parity
 
+def write_31bits(file, message):
+    """Writes the 31-bit encoded message to a file.
 
+    Args:
+        filename (str): The name of the file to write the encoded message to.
+        message (int): The 31-bit encoded message to be written.
+    """
+    
+    # new_filename = filename.split(".")[0] + ".hamming"
+    space = " "
+
+    num_32bits = message & 0xFFFFFFFF
+    file.write(str(num_32bits))
+    file.write(space)
+
+        
 def encode(filename):
-    """Encodes the given file in Hamming (31, 26).
+    """Encodes the given file in Hamming (31, 26) and writes the encoded data to a new file.
     Args:
         filename (str): The name of the file to be encoded.
     Returns:
         None
     """
+    new_filename = filename.split(".")[0] + ".hamming"
+    file = open(new_filename, 'w')
+    
     for chunk in read_26bits(filename):
-        print(f"chunk: {chunk:026b}")
         message = insert_parity_bits(chunk)
+        write_31bits(file, message)
+
+    file.close()
 
 
