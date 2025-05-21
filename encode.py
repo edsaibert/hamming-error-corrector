@@ -105,14 +105,17 @@ def add_parity_to_message(ones_in_the_chunk, parity_bits, message):
     for one in ones_in_the_chunk:
         xor_result ^= one
 
+    counter = 0
     for parity in parity_bits:
-        xor_bit = (xor_result >> (parity - 1)) & 1
+        xor_bit = (xor_result >> counter) & 1
         position = 31 - parity 
 
         if xor_bit == 1:
             message = (message | (1 << position))
         else:
             message = (message & ~(1 << position))
+
+        counter += 1
         
         
     return message
