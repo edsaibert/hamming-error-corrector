@@ -1,10 +1,11 @@
 import sys
-from encode import *
+from decodeFunctions import decode
 
 def main():
     filename = sys.argv[1]
-    encode(filename)
+    decode(filename)
 
 if __name__ == "__main__":
-    print("encoding...")
+    print("decoding...")
     main()
+
