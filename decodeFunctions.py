@@ -1,6 +1,36 @@
 from commonFunctions import identify_parity_bits, read_nbits
 import os
 
+def xor_all_ones(n, chunk):
+    """ Computes the XOR of the positions of all ones in the chunk, considering 1-indexed positions from the left (MSB).
+    Args:
+        n (int): number of bits to consider (should be 31 for Hamming (31,26))
+        chunk (int): the data to process (32 bits, but only n MSBs are used)
+    Returns:
+        int: the XOR of all positions with a 1 bit
+    """
+    result = 0
+    for i in range(1, n):  
+        bit = (chunk >> (n - i - 1)) & 1  
+        if bit:
+            result ^= i
+
+    return result
+
+def flip_bit(n, xor_result, chunk):
+    """
+    Flips the bit at position xor_result (1-indexed from the left/MSB) in the 32-bit chunk.
+    Args:
+        xor_result (int): The position to flip (1-indexed from the left/MSB).
+        chunk (int): The 32-bit integer chunk.
+    Returns:
+        int: The chunk with the bit at xor_result flipped.
+    """
+    bit_pos = n - xor_result  
+    chunk ^= (1 << bit_pos)
+
+    return chunk
+
 def remove_parity_bits(chunk, parity_bits, message):
     """ Removes the parity bits from the chunk and returns the message.
         Args:
@@ -27,7 +57,7 @@ def remove_parity_bits(chunk, parity_bits, message):
 def decode_chunk(chunk):
     """ Decodes a chunk of data using hamming (31, 26) code.
         Args:
-            chunk (str): The chunk of data to decode.
+            chunk (int): The chunk of data to decode.
         Returns:
             str: The decoded chunk.
     """
@@ -65,18 +95,26 @@ def decode(filename):
     bits_counter = 0
     overflow = 0
     overflow_counter = 0
-    read_bytes = []
+
+    all_bytes = [] # to-do: fazer com que a escrita dos arquivos seja em chunks
 
     with open(filename, 'r') as file:
+        read_bytes = []
         data = file.read().strip().split()
         for num_str in data:
-            chunk_31_bits = int(num_str)
-            decoded_chunk = decode_chunk(chunk_31_bits)
-            print(f"Decoded chunk: {decoded_chunk:026b}")
+            chunk_32_bits = int(num_str)
+
+            xor_result = xor_all_ones(32, chunk_32_bits)
+            if (xor_result):
+                chunk_32_bits = flip_bit(32, xor_result, chunk_32_bits)
+
+            decoded_chunk = decode_chunk(chunk_32_bits)
 
             read_bytes, bits_counter, overflow, overflow_counter, read_bytes = transform_nBits_into_string(
                 26, bits_counter, overflow, overflow_counter, read_bytes, decoded_chunk
             )
+
+            all_bytes.extend(read_bytes)
 
     directory = "./out/"
     if not os.path.exists(directory):
