@@ -1,23 +1,27 @@
 import os
 from commonFunctions import identify_parity_bits, read_nbits
 
-def add_chunk_to_message(chunk, message):
+def add_chunk_to_message(chunk, message, chunk_length=26):
     """Adds a chunk of data to the message while tracking the positions of ones.
     Args:
         chunk (int): The data chunk to be added.
         message (int): The current message to which the chunk will be added.
+        chunk_length (int): Number of valid bits in the chunk (for last chunk).
     Returns:
         int: The updated message and list of positions of ones.
     """
     parity_bits = identify_parity_bits(31)
     ones_in_the_chunk = []
-    chunk_idx = 25  
+    chunk_idx = chunk_length - 1 
     message = 0 
-    
+
     for pos in range(1, 32): 
         if pos not in parity_bits:
-            bit = (chunk >> chunk_idx) & 1
-            chunk_idx -= 1
+            if chunk_idx >= 0:
+                bit = (chunk >> chunk_idx) & 1
+                chunk_idx -= 1
+            else:
+                bit = 0 
             message = (message << 1) | bit
             if bit == 1:
                 ones_in_the_chunk.append(pos)
@@ -51,7 +55,7 @@ def add_parity_to_message(ones_in_the_chunk, parity_bits, message):
     return message
 
 
-def insert_parity_bits(chunk):
+def insert_parity_bits(chunk, chunk_length=26):
     """Given a 26-bit chunk, this function inserts 5 parity bits to create a 31-bit message.
     Args:
         chunk (int): The data chunk to be processed.
@@ -62,7 +66,7 @@ def insert_parity_bits(chunk):
     parity = 0
     ones_in_the_chunk = []
 
-    message, ones_in_the_chunk = add_chunk_to_message(chunk, message)
+    message, ones_in_the_chunk = add_chunk_to_message(chunk, message, chunk_length)
     parity_bits = identify_parity_bits(31)
     parity = add_parity_to_message(ones_in_the_chunk, parity_bits, message)
 
@@ -72,16 +76,12 @@ def write_31bits(file, message):
     """Writes the 31-bit encoded message to a file.
 
     Args:
-        filename (str): The name of the file to write the encoded message to.
+        file: The file object to write the encoded message to.
         message (int): The 31-bit encoded message to be written.
     """
-    
-    # new_filename = filename.split(".")[0] + ".hamming"
-    space = " "
-
     num_32bits = message & 0xFFFFFFFF
     file.write(str(num_32bits))
-    file.write(space)
+    file.write(" ") 
 
             
 def encode(filename):
@@ -99,9 +99,8 @@ def encode(filename):
 
     file = open(new_filename, 'w')
     
-    for chunk in read_nbits(filename, 26):
-        message = insert_parity_bits(chunk)
-        print(f"Encoded message: {message:032b}")
+    for chunk, chunk_length in read_nbits(filename, 26):
+        message = insert_parity_bits(chunk, chunk_length)
         write_31bits(file, message)
 
     file.close()

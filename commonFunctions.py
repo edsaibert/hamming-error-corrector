@@ -55,7 +55,7 @@ def read_nbits(filename, n):
                 byte = file.read(1)
                 if not byte:
                     if bits_counter > 0:
-                        yield read_bits
+                        yield read_bits, bits_counter
                     return
 
                 overflow = 0
@@ -63,4 +63,4 @@ def read_nbits(filename, n):
                     n, byte, read_bits, bits_counter, overflow
                 )
 
-            yield read_bits
+            yield read_bits, n 
