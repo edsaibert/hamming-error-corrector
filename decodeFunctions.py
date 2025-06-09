@@ -99,7 +99,7 @@ def decode(filename):
     directory = "./out/"
     if not os.path.exists(directory):
         os.makedirs(directory)
-    new_filename = filename.split("/")[-1].split(".")[0] + ".decoded"
+    new_filename = filename.split("/")[-1].split(".")[0] + ".dec"
     new_filename = os.path.join(directory, new_filename)
 
     with open(new_filename, 'w', encoding='utf-8') as out_file:
